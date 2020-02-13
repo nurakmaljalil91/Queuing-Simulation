@@ -1,10 +1,9 @@
 function queueSimulation()
 
-    ticketInformation();
-    counter_selected  = input('Enter amount of counter(1 ~ 3): ');
-    printf('The number is %d \n',counter_selected);
-    number_of_customers = input('Enter number of customers: ');
-    printf('The number is %d \n',number_of_customers);
+    
+    % ---------- Getting the data from user ----------------------------------
+    counter_selected  = input('Enter amount of counter open(1 ~ 3): ');
+   
     disp('Choose the randomizer generator to use: ')
     disp('1. LinearCG')
     disp('2. MultiplicativeCG')
@@ -12,10 +11,14 @@ function queueSimulation()
     disp('4. RVGED')
     disp('5. RVGUD')
     get_randomizer = input('The randomizer generator use is(1 ~ 5): ');
-    
+    printf('\n\n\n')
+    number_of_customers = feval('LinearCG',1,1,99)(1);
+    %number_of_ticket = input('Enter the number of ticket for movie 1 ');
     interarrival_time_number       = 8;
     SERVICE_TIMES_NUMBER           = 5;
     NUM_OF_ITEM_TIMES              = 9;
+    TICKET_SLOT_OR_DAY             = 9;
+    TICKET_TYPE                    = 3;
     SERVICE_TIME_DEFAULT_BUMP      = 2; %set the default service time as 2
     ITEM_TIME_DEFAULT_BUMP         = 0;	%set the default service time as 0
     INTERARRIVAL_TIME_DEFAULT_BUMP = 0;	%set the default service time as 0
@@ -24,7 +27,8 @@ function queueSimulation()
     ITEM_RN_SIZE                   = 100;
     ITEM_NUMBER_RN_SIZE            = 3;
     
-    % Will be generated before the main loop
+    
+    % variables to generate before main loop
     counter_service_times  = [];
     interarrival_times    = [];
 
@@ -45,10 +49,10 @@ function queueSimulation()
     customer_queued_times        = zeros(1, number_of_customers);
     customer_total_spent_times   = zeros(1, number_of_customers); % queue + service
 
-    %------------------------------------------------------------------------------------------------------------------------------------------------------
-    %user select the generator 
-    %return error message if user enter wrongly 
-    %Remind user to pass in correct arguments
+    % ---------------- data checking for all the data given by user ----------------
+    % user select the generator 
+    % return error message if user enter wrongly 
+    % Remind user to pass in correct arguments
     if (~isset('counter_selected') || ~isset('number_of_customers'))
         error('To simulate with your own number of counters and customers, try calling it as such customerService(num_of_counters, num_of_customers, randomizer). For example: customerService(2, 15, "LinearCG")')
     end
@@ -81,22 +85,14 @@ function queueSimulation()
     if ((get_randomizer < 1) || (get_randomizer > 5))
         error('Choose randomizer from 1 ~ 5 only');
     end
-	
-    
-    %------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   
-     %this is to generate service time 
-     %Generate counters' profiles - their minimum service time, probability of each service time
-    
+    % --------------- Generate ticket information --------------------------------------------------------
+    ticketInformation(randomizer);
+    % --------------- Generate service time for every counter ---------------------------------------------
     counter_service_times =  serviceTime(counter_selected,randomizer,counter_service_times);
-
-    %------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    % Generate Interarrival Times, for-loop used only to indent the code
+    % --------------- Generate interarrival time --------------------------------------------------------
     for i = 1:1;
-
         % First we generate list of numbers ranging from 1 - 100
         interarrival_time_candidates = [];
-        
         
         for j = 1:interarrival_time_number;
             interarrival_time_candidates(j) = feval(randomizer, 1, 1, INTERARRIVAL_TIME_RN_SIZE)(1);
@@ -145,8 +141,8 @@ function queueSimulation()
     rn_interarrival_times = feval(randomizer, number_of_customers, 1, SERVICE_TIME_RN_SIZE);
     rn_service_times      = feval(randomizer, number_of_customers, 1, INTERARRIVAL_TIME_RN_SIZE);
 
-    % Generate Interarrival Table
-    fprintf('INTERARRIVAL TABLE\n')
+    % ----------------- Generate Interarrival Table---------------------------------------------
+    printf('INTERARRIVAL TABLE\n')
     disp('|==================================================|')
     disp('|Interarrival | Probability | CDF    | Random No   |')
     disp('|Time         |             | F(X)   | Range       |')
@@ -171,15 +167,15 @@ function queueSimulation()
         randno_range_end(i)=randno_range_start(j)-1;
     end
     for i = 1:interarrival_time_number;
-        fprintf('\t\t\t%d\t\t\t\t\t\t\t\t\t\t\t\t\t\t%2.2f\t\t\t\t\t\t\t\t\t%2.2f\t\t\t\t%3d - %3d\n',[i probability(i) interarrival_time_random_range(i) randno_range_start(i) randno_range_end(i)])
+        printf('\t\t\t%d\t\t\t\t\t\t\t\t\t\t\t\t\t\t%2.2f\t\t\t\t\t\t\t\t\t%2.2f\t\t\t\t%3d - %3d\n',[i probability(i) interarrival_time_random_range(i) randno_range_start(i) randno_range_end(i)])
     end
     disp('|==================================================|')
-    fprintf('\n\n\n')
+    printf('\n\n\n')
     
-    %-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    %this is to generate item number
+    % -----------------------------------------------------------------------------------------------------
+     %this is to generate item number
     
-    for i = 1:1;
+     for i = 1:1;
 
         % First we generate list of numbers ranging from 1 - 100
         item_candidates = [];
@@ -303,13 +299,27 @@ function queueSimulation()
         customer_total_price(customer) =  item_random_price(item_random_number(customer))*item_random_number(customer);
 
         % Print result
-        fprintf('\t\t\t%3d \t\t\t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t %3d \t\t\t\t %3d \t\t\t\t\t\t\t\t\t %3d \t\t\t\t\t\t %3d\n', [customer customer_interarrival_times(customer) customer_arrival_times(customer) item_purchased(customer) item_random_number(customer) item_random_number(customer) customer_total_price(customer) ])
+        printf('\t\t\t%3d \t\t\t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t %3d \t\t\t\t %3d \t\t\t\t\t\t\t\t\t %3d \t\t\t\t\t\t %3d\n', [customer customer_interarrival_times(customer) customer_arrival_times(customer) item_purchased(customer) item_random_number(customer) item_random_number(customer) customer_total_price(customer) ])
 
     end;
     
     disp('|======================================================================================| ')
-    fprintf('\n\n\n')
+    printf('\n\n\n')
     %----------------------------------------------------------------------------------------------------------------------------------------------------
+    
+     
+    %Timeline
+    printf('\n\n\n');
+    disp('|===========================================================================================|')
+    disp('|                               COUNTER OPERATION STATUS                                    |')
+    disp('|===========================================================================================|')
+    printf('\n\n');
+    for customer = 1:number_of_customers;
+        printf('Customer %d arrives at minute %d and queues at Counter %d\n',customer,customer_arrival_times(customer),customer_served_by(customer));
+        printf('Service Time is %d and Service starts at %d\n',customer_service_duration(customer),customer_service_begin_times(customer));
+        printf('Customer %d departs at %d\n\n',customer,customer_service_end_times(customer));
+    end
+    
     % Let's simulate all the customers arriving
     disp('|===========================================================================================|')
     disp('|Cust | Interarrival | Arrival | Queued | Counter | Service | Service  | Service | Total     |')
@@ -364,58 +374,58 @@ function queueSimulation()
         counter_ending_times(chosen_counter(1)) = customer_service_end_times(customer);
 
         % Print result
-        fprintf('\t\t\t%3d \t\t\t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t %3d \t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t\t %3d \t\t\t\t\t %3d \t\t\t\t\t\t\t %3d\n', [customer customer_interarrival_times(customer) customer_arrival_times(customer) customer_queued_times(customer) customer_served_by(customer) customer_service_begin_times(customer) customer_service_duration(customer) customer_service_end_times(customer) customer_total_spent_times(customer)])
+        printf('\t\t\t%3d \t\t\t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t %3d \t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t\t %3d \t\t\t\t\t %3d \t\t\t\t\t\t\t %3d\n', [customer customer_interarrival_times(customer) customer_arrival_times(customer) customer_queued_times(customer) customer_served_by(customer) customer_service_begin_times(customer) customer_service_duration(customer) customer_service_end_times(customer) customer_total_spent_times(customer)])
 
     end;
     disp('|===========================================================================================|')
     
     
     %Timeline
-    fprintf('\n\n\n');
+    printf('\n\n\n');
     disp('|===========================================================================================|')
     disp('|                               DISCRIPTION OF CUSTOMERS                                    |')
     disp('|===========================================================================================|')
-    fprintf('\n\n');
+    printf('\n\n');
     for customer = 1:number_of_customers;
-        fprintf('Customer %d arrives at minute %d and queues at Counter %d\n',customer,customer_arrival_times(customer),customer_served_by(customer));
-        fprintf('Service Time is %d and Service starts at %d\n',customer_service_duration(customer),customer_service_begin_times(customer));
-        fprintf('Customer %d departs at %d\n\n',customer,customer_service_end_times(customer));
+        printf('Customer %d arrives at minute %d and queues at Counter %d\n',customer,customer_arrival_times(customer),customer_served_by(customer));
+        printf('Service Time is %d and Service starts at %d\n',customer_service_duration(customer),customer_service_begin_times(customer));
+        printf('Customer %d departs at %d\n\n',customer,customer_service_end_times(customer));
     end
     
     disp('|===========================================================================================|')
     %-------------------------------------------------------------------------------------------------------------------------------------------------------
-    fprintf('\n\n')
+    printf('\n\n')
     disp('|========================================|')
-    fprintf('| SUMMARY OF THE COUNTERS                 |\n');
+    printf('| SUMMARY OF THE COUNTERS                 |\n');
     disp('|========================================|')
     % Testing
-    fprintf('\n\n');
+    printf('\n\n');
     %Initialize counter_busy array
     counter_busy=[]; 
     for counter = 1:counter_selected;
-        fprintf('Counter %d spent total of %d minutes serving total of %d customers.\n', [counter counter_spent_times(counter) counter_number_of_customers(counter)]);
+        printf('Counter %d spent total of %d minutes serving total of %d customers.\n', [counter counter_spent_times(counter) counter_number_of_customers(counter)]);
         counter_busy(counter)=(counter_spent_times(counter)/customer_service_end_times(number_of_customers))* 100;
-        fprintf('Percentage of Counter %d being busy is %2.2f percent.\n\n',counter,counter_busy(counter))
+        printf('Percentage of Counter %d being busy is %2.2f percent.\n\n',counter,counter_busy(counter))
     end
 
-    fprintf('\n');
+    printf('\n');
     %----------------------------------------------------------------------------------------------------------------------------------------------------
     % Avergae customer waiting time + Chance of them queueing up
     customer_avg_queue_time = mean(customer_queued_times);
     percentage_of_customers_queue_up = 100 * length(nonzeros(customer_queued_times)) / number_of_customers;
     disp('|========================================|')
-    fprintf('| SUMMARY OF THE CUSTOMER SERVICE SYSTEM |\n');
+    printf('| SUMMARY OF THE CUSTOMER SERVICE SYSTEM |\n');
     disp('|========================================|')
-    fprintf('\n\n')
-    fprintf('%3.2f percent of customers have spent time queueing up\n', [percentage_of_customers_queue_up]);
-    fprintf('Average waiting time: %5.2f\n', [customer_avg_queue_time])
+    printf('\n\n')
+    printf('%3.2f percent of customers have spent time queueing up\n', [percentage_of_customers_queue_up]);
+    printf('Average waiting time: %5.2f\n', [customer_avg_queue_time])
 
     % Average service time
     customer_avg_service_time = mean(customer_service_duration);
     customer_avg_interarrival_time = mean(customer_interarrival_times);
     customer_avg_spent_time = mean(customer_total_spent_times);
 
-    fprintf('Average service time of each counter: %5.2f\nAverage interarrival time: %5.2f\nAverage time customer spent in Customer Service System: %5.2f\n\n\n', [customer_avg_service_time customer_avg_interarrival_time customer_avg_spent_time]);
+    printf('Average service time of each counter: %5.2f\nAverage interarrival time: %5.2f\nAverage time customer spent in Customer Service System: %5.2f\n\n\n', [customer_avg_service_time customer_avg_interarrival_time customer_avg_spent_time]);
 
 	
 	%Summary
