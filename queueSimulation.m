@@ -5,19 +5,19 @@ function queueSimulation()
     counter_selected  = input('Enter amount of counter open(1 ~ 3): ');
    
     disp('Choose the randomizer generator to use: ')
-    disp('1. LinearCG')
-    disp('2. MultiplicativeCG')
-    disp('3. AdditiveCG')
-    disp('4. RVGED')
-    disp('5. RVGUD')
+    disp('1. Linear Congruential Generator')
+    disp('2. Multiplicative Congruential Generator')
+    disp('3. Additive Congruential Generator')
+    disp('4. Random variate generator for exponential distribution ')
+    disp('5. Random variate generator for uniform distribution')
     get_randomizer = input('The randomizer generator use is(1 ~ 5): ');
     printf('\n\n\n')
-    number_of_customers = feval('LinearCG',1,1,99)(1);
+    number_of_customers = feval('linearCongruentialGenerator',1,1,99)(1);
     %number_of_ticket = input('Enter the number of ticket for movie 1 ');
     interarrival_time_number       = 8;
     SERVICE_TIMES_NUMBER           = 5;
     NUM_OF_ITEM_TIMES              = 9;
-    TICKET_SLOT_OR_DAY             = 9;
+    TICKET_SLOT_OR_DAY             = 6;
     TICKET_TYPE                    = 3;
     SERVICE_TIME_DEFAULT_BUMP      = 2; %set the default service time as 2
     ITEM_TIME_DEFAULT_BUMP         = 0;	%set the default service time as 0
@@ -68,7 +68,7 @@ function queueSimulation()
     % If randomizer is set, check whether randomizer function is available.
     % Default randomizer would be RVGUD
     if(get_randomizer == 1)
-        randomizer = 'LinearCG';
+        randomizer = 'linearCongruentialGenerator';
     end
     if(get_randomizer == 2)
         randomizer = 'MultiplicativeCG';
@@ -181,7 +181,7 @@ function queueSimulation()
         item_candidates = [];
         
         
-        for j = 1:NUM_OF_ITEM_TIMES;
+        for j = 1:TICKET_SLOT_OR_DAY;
             item_candidates(j) = feval(randomizer, 1, 1, ITEM_RN_SIZE)(1);
         end
     
@@ -192,7 +192,7 @@ function queueSimulation()
         % Now make them random number range of 1 - 100
         item_random_range = [];
 
-        for j = 1:NUM_OF_ITEM_TIMES;
+        for j = 1:TICKET_SLOT_OR_DAY;
             item_random_range(j) = round(100 * item_candidates(j) / item_candidates_sum);
 
             if (j >= 2);
@@ -201,13 +201,13 @@ function queueSimulation()
         end
 
         % Sometimes the range max may not end at 100, therefore to solve the issue:
-        item_random_range = item_random_range + (100 - item_random_range(NUM_OF_ITEM_TIMES));
+        item_random_range = item_random_range + (100 - item_random_range(TICKET_SLOT_OR_DAY));
         % Acquire random no range lower limit 
         randno_range_start=[];
         %Random no range always start with 1 ( 1 - *)
         randno_range_start(1)=1;
         %===========================================
-        for j = 1:NUM_OF_ITEM_TIMES;
+        for j = 1:TICKET_SLOT_OR_DAY;
 
             if j >= 2;
                 start_point = item_random_range(j - 1) + 1;
@@ -232,18 +232,18 @@ function queueSimulation()
     %=====================================================
     
     % Generate Item Table
-    fprintf('ITEM TABLE\n')
-    disp('|=============================================================|')
-    disp('|Item         | Probability | CDF    | Random No   | Price    |')
-    disp('|Number       |             | F(X)   | Range       |          |')
-    disp('|=============================================================|')
+    fprintf('TABLE OF TICKET SLOT\n')
+    disp('|===================================================|')
+    disp('|Ticket        | Probability | CDF    | Random No   |')
+    disp('|slot/day      |             | F(X)   | Range       |')
+    disp('|===================================================|')
     
     item_random_range=item_random_range/100;
     item_random_range=item_random_range';
     
     probability=[];
     probability(1)=item_random_range(1);
-    for i =1:NUM_OF_ITEM_TIMES-1;
+    for i =1:TICKET_SLOT_OR_DAY-1;
         j=i+1;
         probability(j)=item_random_range(j)-item_random_range(i);
     end
@@ -251,33 +251,123 @@ function queueSimulation()
     
     randno_range_end=[];
     
-    randno_range_end(NUM_OF_ITEM_TIMES)=100;
-    for i = 1:(NUM_OF_ITEM_TIMES-1)
+    randno_range_end(TICKET_SLOT_OR_DAY)=100;
+    for i = 1:(TICKET_SLOT_OR_DAY-1)
         j=i+1;
         randno_range_end(i)=randno_range_start(j)-1;
     end
     
     item_random_price=[];
-    for j = 1:NUM_OF_ITEM_TIMES;
+    for j = 1:9;
         item_random_price(j) = feval(randomizer, 1, 1, ITEM_RN_SIZE)(1);
     end
     
     
     
-    for i = 1:NUM_OF_ITEM_TIMES;
-        fprintf('\t\t\t%d\t\t\t\t\t\t\t\t\t\t\t\t\t\t%2.2f\t\t\t\t\t\t\t\t\t%2.2f\t\t\t\t%3d - %3d\t\t\t\t%2.2f\n',[i probability(i) item_random_range(i) randno_range_start(i) randno_range_end(i) item_random_price(i)])
+    for i = 1:TICKET_SLOT_OR_DAY;
+        fprintf('\t\t\t%d\t\t\t\t\t\t\t\t\t\t\t\t\t\t%2.2f\t\t\t\t\t\t\t\t\t%2.2f\t\t\t\t%3d - %3d\t\t\t\t\n',[i probability(i) item_random_range(i) randno_range_start(i) randno_range_end(i)])
     end
-    disp('|=============================================================|')
+    disp('|===================================================|')
     fprintf('\n\n\n')
     
+     % -----------------------------------------------------------------------------------------------------
+     %this is to generate item number
+    
+     for i = 1:1;
+
+        % First we generate list of numbers ranging from 1 - 100
+        item_candidates = [];
+        
+        
+        for j = 1:TICKET_TYPE;
+            item_candidates(j) = feval(randomizer, 1, 1, ITEM_RN_SIZE)(1);
+        end
+    
+        %========================================
+        % Find the denominator for the candidate numbers to divide against
+        item_candidates_sum = sum(item_candidates);
+
+        % Now make them random number range of 1 - 100
+        item_random_range = [];
+
+        for j = 1:TICKET_TYPE;
+            item_random_range(j) = round(100 * item_candidates(j) / item_candidates_sum);
+
+            if (j >= 2);
+                item_random_range(j) = item_random_range(j) + item_random_range(j - 1);
+            end
+        end
+
+        % Sometimes the range max may not end at 100, therefore to solve the issue:
+        item_random_range = item_random_range + (100 - item_random_range(TICKET_TYPE));
+        % Acquire random no range lower limit 
+        randno_range_start=[];
+        %Random no range always start with 1 ( 1 - *)
+        randno_range_start(1)=1;
+        %===========================================
+        for j = 1:TICKET_TYPE;
+
+            if j >= 2;
+                start_point = item_random_range(j - 1) + 1;
+                %Stores the start point into an array for IAT Table 
+                randno_range_start(j)=start_point;
+            else;
+                start_point = 1;
+            end
+
+            for k = start_point:item_random_range(j);
+                item_times = [item_times (j + i - 1 + ITEM_TIME_DEFAULT_BUMP)];
+            end
+
+        end
+
+    end
+
+    % First generate the RN interarrival and RN service time
+    rn_item_times = feval(randomizer, number_of_customers, 1, ITEM_RN_SIZE);
+    rn_item_price = feval(randomizer, number_of_customers, 1, ITEM_RN_SIZE);
+
+    %=====================================================
+    
+    % Generate Item Table
+    fprintf('TABLE OF TICKET TYPE\n')
+    disp('|=============================================|')
+    disp('|Ticket      | Probability | CDF    | Range   |')
+    disp('|type        |             | F(X)   |         |')
+    disp('|=============================================|')
+    
+    item_random_range=item_random_range/100;
+    item_random_range=item_random_range';
+    
+    probability=[];
+    probability(1)=item_random_range(1);
+    for i =1:TICKET_TYPE-1;
+        j=i+1;
+        probability(j)=item_random_range(j)-item_random_range(i);
+    end
+
+    
+    randno_range_end=[];
+    
+    randno_range_end(TICKET_TYPE)=100;
+    for i = 1:(TICKET_TYPE-1)
+        j=i+1;
+        randno_range_end(i)=randno_range_start(j)-1;
+    end
+    
+    for i = 1:TICKET_TYPE;
+        fprintf('\tmovie %d\t\t\t\t\t\t\t%2.2f\t\t\t\t\t\t\t\t\t%2.2f\t\t\t\t%3d - %3d\t\t\t\t\n',[i probability(i) item_random_range(i) randno_range_start(i) randno_range_end(i)])
+    end
+    disp('|=============================================|')
+    fprintf('\n\n\n')
     
     %-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     
      % Let's simulate all the customers arriving
-    disp('|====================================================================================| ')
-    disp('|Cust | Interarrival | Arrival | Items     | RN for the  | Item    | Total           | ')
-    disp('|ID   | Time         | Time    | Purchased | item number | number  | price           | ')
-    disp('|====================================================================================| ')
+    disp('|=========================================================================================================| ')
+    disp('|n  |RN for | Interarrival | Arrival | RN for      | ticket    | RN for the  | No of ticket | Total       | ')
+    disp('|   |inter  | Time         | Time    | ticket slot | slot/day  | ticket type | purchased    | amount paid | ')
+    disp('|=========================================================================================================| ')
 
     for customer = 1:number_of_customers;
 
@@ -299,31 +389,21 @@ function queueSimulation()
         customer_total_price(customer) =  item_random_price(item_random_number(customer))*item_random_number(customer);
 
         % Print result
-        printf('\t\t\t%3d \t\t\t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t %3d \t\t\t\t %3d \t\t\t\t\t\t\t\t\t %3d \t\t\t\t\t\t %3d\n', [customer customer_interarrival_times(customer) customer_arrival_times(customer) item_purchased(customer) item_random_number(customer) item_random_number(customer) customer_total_price(customer) ])
+        printf('%3d \t\t %3d \t\t\t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t\t\t\t %3d \t\t\t\t\t\t\t\t\t %3d \t\t\t\t\t\t\t\t\t\t %3d \t\t\t\t\t\t\t\t\t\t\t %3d \t\t\t\t\t\t\t %3d\n', [customer rn_interarrival_times(customer) customer_interarrival_times(customer) customer_arrival_times(customer) rn_interarrival_times(customer) item_purchased(customer) item_random_number(customer) item_random_number(customer) customer_total_price(customer) ])
 
     end;
     
-    disp('|======================================================================================| ')
+    disp('|=========================================================================================================| ')
     printf('\n\n\n')
     %----------------------------------------------------------------------------------------------------------------------------------------------------
     
      
-    %Timeline
-    printf('\n\n\n');
-    disp('|===========================================================================================|')
-    disp('|                               COUNTER OPERATION STATUS                                    |')
-    disp('|===========================================================================================|')
-    printf('\n\n');
-    for customer = 1:number_of_customers;
-        printf('Customer %d arrives at minute %d and queues at Counter %d\n',customer,customer_arrival_times(customer),customer_served_by(customer));
-        printf('Service Time is %d and Service starts at %d\n',customer_service_duration(customer),customer_service_begin_times(customer));
-        printf('Customer %d departs at %d\n\n',customer,customer_service_end_times(customer));
-    end
+
     
     % Let's simulate all the customers arriving
     disp('|===========================================================================================|')
-    disp('|Cust | Interarrival | Arrival | Queued | Counter | Service | Service  | Service | Total     |')
-    disp('|ID   | Time         | Time    | Time   | Number | Starts  | Duration | Ends    | Time Spent|')
+    disp('|n | Interarrival | Arrival | Queued | Counter | Service | Service  | Service | Total     |')
+    disp('|  | Time         | Time    | Time   | Number | Starts  | Duration | Ends    | Time Spent|')
     disp('|===========================================================================================|')
 
     for customer = 1:number_of_customers;
@@ -374,7 +454,7 @@ function queueSimulation()
         counter_ending_times(chosen_counter(1)) = customer_service_end_times(customer);
 
         % Print result
-        printf('\t\t\t%3d \t\t\t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t %3d \t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t\t %3d \t\t\t\t\t %3d \t\t\t\t\t\t\t %3d\n', [customer customer_interarrival_times(customer) customer_arrival_times(customer) customer_queued_times(customer) customer_served_by(customer) customer_service_begin_times(customer) customer_service_duration(customer) customer_service_end_times(customer) customer_total_spent_times(customer)])
+        printf('\t%3d \t\t\t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t %3d \t\t\t\t %3d \t\t\t\t\t\t %3d \t\t\t\t\t %3d \t\t\t\t\t %3d \t\t\t\t\t\t\t %3d\n', [customer customer_interarrival_times(customer) customer_arrival_times(customer) customer_queued_times(customer) customer_served_by(customer) customer_service_begin_times(customer) customer_service_duration(customer) customer_service_end_times(customer) customer_total_spent_times(customer)])
 
     end;
     disp('|===========================================================================================|')

@@ -10,11 +10,11 @@ function ticketInformation(randomizer)
     disp('| Day/     | total   | total    | total    |')
     disp('| Slot     | movie 1 | movie 2  | movie 3  |')
     disp('|------------------------------------------|')
-    for i = 1:3          
+    for i = 1:9          
         printf('|\t\t\t\t%d\t\t\t\t\t\t\t\t\t\t%d\t\t\t\t\t\t\t\t%d\t\t\t\t\t\t\t\t%d\n',i,ticket_movie_1,ticket_movie_2,ticket_movie_3)
     end
     disp('|------------------------------------------|')
     fprintf('\n\n')  
 
     disp('Press enter to continue......')
-    pause
+    %pause
